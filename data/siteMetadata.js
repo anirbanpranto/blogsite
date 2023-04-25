@@ -7,7 +7,6 @@ const siteMetadata = {
   theme: 'system', // system, dark or light
   siteUrl: 'https://www.anirbanpranto.me',
   siteRepo: 'https://github.com/anirban/blogsite',
-  siteLogo: '/static/images/logo.png',
   image: '/static/images/pp.jpg',
   email: 'anirbanpranto@gmail.com',
   github: 'https://github.com/anirbanpranto',
@@ -48,13 +47,13 @@ const siteMetadata = {
       metadata: '0',
       // theme example: light, dark, dark_dimmed, dark_high_contrast
       // transparent_dark, preferred_color_scheme, custom
-      theme: 'light',
+      theme: 'dark',
       // Place the comment box above the comments. options: bottom, top
       inputPosition: 'bottom',
       // Choose the language giscus will be displayed in. options: en, es, zh-CN, zh-TW, ko, ja etc
       lang: 'en',
       // theme when dark mode
-      darkTheme: 'transparent_dark',
+      darkTheme: 'dark',
       // If the theme option above is set to 'custom`
       // please provide a link below to your custom theme css file.
       // example: https://giscus.app/themes/custom_example.css
