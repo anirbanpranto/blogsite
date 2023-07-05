@@ -1,7 +1,7 @@
 const siteMetadata = {
-  title: "Anirban's Mind",
+  title: 'Monke talk',
   author: 'Anirban Bala Pranto',
-  headerTitle: "Anirban's Mind",
+  headerTitle: 'Monke Talk',
   description: 'I write my thoughts here.',
   language: 'en-us',
   theme: 'system', // system, dark or light
