@@ -1,5 +1,5 @@
 ---
-name: Anirban Bala Pranto
+name: Bala
 avatar: /static/images/pp.jpg
 occupation: AI Engineer (MLOps)
 company: Tapway
