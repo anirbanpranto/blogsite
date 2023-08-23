@@ -1,0 +1,186 @@
+---
+title: 'Algorithmic thinking is actually useful (sometimes)'
+date: '2023-08-23'
+tags: ['data structures', 'algorithms']
+draft: false
+summary: 'How to approach algorithmic problems in real life (for monkeys like me)'
+---
+
+# The problem
+
+Where I work, we do a lot of computer vision tasks. One of which is license plate recognition (LPR). Although machine learning works well for this most of the time,
+we sometimes have misclassified license plates. For example, often `0` is recognized as `O/Q/D` , `B` is often recognized as `8`, so on. There are a bunch of such alphabets and numbers that
+are misclassified as other characters. The LPR tasks are often done in toll booths, so we have to correctly classify the license plate in both entrance and exit in order to currectly charge the
+vehicles. Sometimes, there might be misclassification at one of the points, so there will be a mismatch in our queue of cars currently inside the zone.
+
+How can we solve this and make our system more robust?
+
+# Why not just use Edit Distance?
+
+Most common idea is, calculating [Edit Distance](https://en.wikipedia.org/wiki/Edit_distance), more specifically `Levenshtein distance`, its a metric which gives us minimum number of operations you have
+perform to transform string $A$ to string $B$. So you can get all license plate numbers in the queue and calculate the minimum of minimum edit distances from the detected
+license plate number from the camera. This works quite well, but often it is very lenient. It can match with wildly different strings, that by sheer luck, has the minimum edit distance
+from the detected license plate.
+
+# Ad-hoc approach
+
+Machine learning algorithms are actually really good at OCR, or related tasks. Only a small amount of characters are often error prone. Our data
+team made a list of most commonly occuring misclassified characters and the characters they get mixed up with.
+
+```python
+{
+        "1" -> "7","I",
+        "7" -> "1", "I",
+        "I" -> "1", "7",
+        "B" -> "8",
+        "8" -> "B",
+        "5" -> "S",
+        "S" -> "5",
+        "0" -> "Q","D","O",
+        "Q" -> "D","0","0",
+        "D" -> "Q","O","0",
+        "V" -> "Y",
+        "Y" -> "V"
+}
+```
+
+The idea is to generate all possible strings that the license plate could be misclassified with. That is, for example, you have a license plate
+`ABCD1184`, here, `B` could be `8`, or `B` could be `B`, for each of these scenarios, `D` could be either `D/0/O/Q` and so on. Which started as
+a fairly simple task, turned out to be a fairly challenging combinatorial problem. For each character that can be misclassified,
+we have to generate all possible other strings that it could generate, for every occurance of such a character. For example, with the given characted mapping,
+the generated list for `ABCD1184` is -
+
+```python
+['A8COIIB4', 'A8COII84', 'A8COI7B4', 'A8COI784', 'A8COI1B4', 'A8COI184', 'A8CO7IB4', 'A8CO7I84', 'A8CO77B4', 'A8CO7784', 'A8CO71B4', 'A8CO7184', 'A8CO1IB4', 'A8CO1I84', 'A8CO17B4', 'A8CO1784',
+'A8CO11B4', 'A8CO1184', 'A8CQIIB4', 'A8CQII84', 'A8CQI7B4', 'A8CQI784', 'A8CQI1B4', 'A8CQI184', 'A8CQ7IB4', 'A8CQ7I84', 'A8CQ77B4', 'A8CQ7784', 'A8CQ71B4', 'A8CQ7184', 'A8CQ1IB4', 'A8CQ1I84',
+'A8CQ17B4', 'A8CQ1784', 'A8CQ11B4', 'A8CQ1184', 'A8CDIIB4', 'A8CDII84', 'A8CDI7B4', 'A8CDI784', 'A8CDI1B4', 'A8CDI184', 'A8CD7IB4', 'A8CD7I84', 'A8CD77B4', 'A8CD7784', 'A8CD71B4', 'A8CD7184',
+'A8CD1IB4', 'A8CD1I84', 'A8CD17B4', 'A8CD1784', 'A8CD11B4', 'A8CD1184', 'ABCOIIB4', 'ABCOII84', 'ABCOI7B4', 'ABCOI784', 'ABCOI1B4', 'ABCOI184', 'ABCO7IB4', 'ABCO7I84', 'ABCO77B4', 'ABCO7784',
+'ABCO71B4', 'ABCO7184', 'ABCO1IB4', 'ABCO1I84', 'ABCO17B4', 'ABCO1784', 'ABCO11B4', 'ABCO1184', 'ABCQIIB4', 'ABCQII84', 'ABCQI7B4', 'ABCQI784', 'ABCQI1B4', 'ABCQI184', 'ABCQ7IB4', 'ABCQ7I84',
+'ABCQ77B4', 'ABCQ7784', 'ABCQ71B4', 'ABCQ7184', 'ABCQ1IB4', 'ABCQ1I84', 'ABCQ17B4', 'ABCQ1784', 'ABCQ11B4', 'ABCQ1184', 'ABCDIIB4', 'ABCDII84', 'ABCDI7B4', 'ABCDI784', 'ABCDI1B4', 'ABCDI184',
+'ABCD7IB4', 'ABCD7I84', 'ABCD77B4', 'ABCD7784', 'ABCD71B4', 'ABCD7184', 'ABCD1IB4', 'ABCD1I84', 'ABCD17B4', 'ABCD1784', 'ABCD11B4', 'ABCD1184']
+```
+
+# Recursive Brute Force
+
+Intuitively, you can generate all possible strings by just straight up brute forcing. It would probably work fairly well in practice. Which is what
+I came up with at first.
+
+## The algorithm
+
+1. Start with an empty string
+2. Use the empty string as an input to the function
+3. Add the next character in the license plate to the empty string and call the function again with the new string
+4. If the next character is one of the characters in the character map, add one of the possible characters to the empty string, for each character that it can be replaced with. Call the function with the newly formed string.
+5. With these function calls, you'd get deep enough in the recursion tree when one of the trees form a string which is the same length as original license plate. When this happens, add the string to a list and terminate that tree.
+
+Quite simple right? Here's the code for it,
+
+```python
+def generate_alt_carplates(original_carplate:str):
+    char_map = {
+        "1": {"7","I"},
+        "7": {"1", "I"},
+        "I": {"1", "7"},
+        "B": {"8"},
+        "8": {"B"},
+        "5": {"S"},
+        "S": {"5"},
+        "0": {"Q","D","O"},
+        "Q": {"D","0","0"},
+        "D": {"Q","O","0"},
+        "V": {"Y"},
+        "Y": {"V"}
+    }
+    alts = []
+
+    def string_builder(carplate, ori):
+        reqlen = len(ori)
+        sz = len(carplate)
+        if sz == reqlen:
+            alts.append(carplate)
+            return
+        if ori[sz] in char_map:
+            for item in char_map[ori[sz]]:
+                cp_cp = carplate
+                cp_cp += item
+                string_builder(cp_cp, ori)
+        string_builder(carplate+ori[sz], ori)
+    string_builder("", original_carplate)
+    return alts
+
+plates = generate_alt_carplates("ABCD1184")
+print(plates)
+```
+
+Here, we use a `dictionary` of `set`(s) for constant time lookups (on average case). So we can consider the lookup times for this to be $O(1)$.
+This algorithm is correct, and its fast enough in practice. But a quick analysis can tell us that the time complexity is not good enough.
+Consider this case, our given license plate number is `1111111` where $n$ is the number of characters in the license plate number. And `1` has the following character mapping `A, B, C, D, E, F, G, ..., 0, 1, 2, 3, .. , 9` where number of
+characters its mapped to is $k$. For the first position, we have $k$ possibilities, for next one, we have $k \cdot k $ possibilities, and next one we have $k \cdot k \cdot k$ possibilities.
+Mathematically, we can obtain the following sum,
+
+$$
+\sum_0^n k^0 + k^1 + (k \cdot k) + (k \cdot k \cdot k) + ... + (k^n) = \frac{1 \cdot (k^{n+1} - 1)}{k - 1}
+$$
+
+The obtained time complexity is $O(\frac{1 \cdot (k^{n+1} - 1)}{k - 1})$ which is a large number for even pretty small inputs. Although for number plates this is more than enough (typical number plates are less than 10 characters), but it can be quite slow due to recursion overhead.
+
+# A more performant iterative algorithm
+
+Notice that, in the generated list a lot of the strings have the same ending, for example - `'A8COI7B4', 'A8CQI7B4', 'A8CDI7B4', 'ABCOI7B4', 'ABCQI7B4', 'ABCDI7B4'` all have the exact same last 4 characters. I thought this might enable us to derive a dynamic programming solution.
+but after careful thinking, I realized that [overlapping subproblems](https://en.wikipedia.org/wiki/Overlapping_subproblems), which allows us to model the problem to be a dynamic programming problem is absent here.
+Since the changes in strings do not happen sequentially, the next char does not depend on which char came before it, and the previous character does not depend on charcters after it. Each character is on their own.
+So I just decided to derive all possible strings iteratively to at least get rid of the recursion overhead.
+After half an hour more problem solving, I came up with this solution -
+
+```python
+def generate_alt_carplates(ori, char_map):
+    dp = [[] for _ in range(len(ori) + 1)]
+    dp[0] = ['']
+    for sz in range(1, len(ori) + 1):
+        if ori[sz - 1] in char_map:
+            for item in char_map[ori[sz - 1]]:
+                dp[sz] += [s + item for s in dp[sz - 1]]
+        dp[sz] += [s + ori[sz - 1] for s in dp[sz - 1]]
+    return dp[len(ori)]
+
+char_map = {
+        "1": {"7","I"},
+        "7": {"1", "I"},
+        "I": {"1", "7"},
+        "B": {"8"},
+        "8": {"B"},
+        "5": {"S"},
+        "S": {"5"},
+        "0": {"Q","D","O"},
+        "Q": {"D","0","0"},
+        "D": {"Q","O","0"},
+        "V": {"Y"},
+        "Y": {"V"}
+}
+original_carplate = "ABCD1184"
+result = generate_alt_carplates(original_carplate, char_map=char_map)
+print(result)
+```
+
+The time complexity of this approach is exactly the same as previous approach, but in practice this is an order of magnitude faster algorithm. Here is a performance comparison -
+
+## Recursive
+
+| n   | max(k) | Runtime (Seconds)     |
+| :-- | :----: | :-------------------- |
+| 8   |   3    | 0.0007460117340087891 |
+| 16  |   3    | 0.19844412803649902   |
+| 24  |   3    | 87.6454918384552      |
+
+## Iterative
+
+| n   | max(k) | Runtime (Seconds)    |
+| :-- | :----: | :------------------- |
+| 8   |   3    | 0.00004363059        |
+| 16  |   3    | 0.008478164672851562 |
+| 24  |   3    | 2.3301162719726562   |
+
+# Conclusion
+
+A typical number plate never exceeds the length of 7-8 characters, so either algorithm would be fast enough for the task. But its still generally a good idea to not introduce recursion to the code. Despite having the same time complexity, the iterative algorithm is **37x** faster than the recursive algorithm for larger inputs. I'm not really that good at algorithmic problem solving,
+but having the fundamental knowledge helped me approach problems carefully and methodologically. I guess practicing leetcode was not that useless after all.
