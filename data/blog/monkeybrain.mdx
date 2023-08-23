@@ -71,7 +71,7 @@ I came up with at first.
 2. Use the empty string as an input to the function
 3. Add the next character in the license plate to the empty string and call the function again with the new string
 4. If the next character is one of the characters in the character map, add one of the possible characters to the empty string, for each character that it can be replaced with. Call the function with the newly formed string.
-5. With these function calls, you'd get deep enough in the recursion tree when one of the trees form a string which is the same length as original license plate. When this happens, add the string to a list and terminate that tree.
+5. With these function calls, you'd get deep enough in the recursion tree when one of the trees will form a string which is the same length as original license plate. When this happens, add the string to a list and terminate that tree.
 
 Quite simple right? Here's the code for it,
 
@@ -123,6 +123,8 @@ $$
 $$
 
 The obtained time complexity is $O(\frac{1 \cdot (k^{n+1} - 1)}{k - 1})$ which is a large number for even pretty small inputs. Although for number plates this is more than enough (typical number plates are less than 10 characters), but it can be quite slow due to recursion overhead.
+
+![visual aid](/static/images/graph.png)
 
 # A more performant iterative algorithm
 
@@ -182,5 +184,5 @@ The time complexity of this approach is exactly the same as previous approach, b
 
 # Conclusion
 
-A typical number plate never exceeds the length of 7-8 characters, so either algorithm would be fast enough for the task. But its still generally a good idea to not introduce recursion to the code. Despite having the same time complexity, the iterative algorithm is **37x** faster than the recursive algorithm for larger inputs. I'm not really that good at algorithmic problem solving,
+A typical number plate never exceeds the length of 7-8 characters, so either algorithm would be fast enough for the task. But its still generally a good idea to not introduce recursion in the codebase. Despite having the same time complexity, the iterative algorithm is **37x** faster than the recursive algorithm for larger inputs. I'm not really that good at algorithmic problem solving,
 but having the fundamental knowledge helped me approach problems carefully and methodologically. I guess practicing leetcode was not that useless after all.
