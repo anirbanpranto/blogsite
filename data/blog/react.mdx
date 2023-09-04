@@ -1,0 +1,73 @@
+---
+title: 'Maybe you should step back a bit.'
+date: '2023-09-03'
+tags: ['software engineering', 'learning']
+draft: false
+summary: 'Do you even javascript bro?'
+---
+
+# The state of software engineering
+
+If go to a meetup in my university and ask people, how many of you guys know `React/Svelte/NextJS/Vue` or (insert another javascript framework here), I think
+a lot of hands will be raised. How many of you know `Django/Laravel/Rails/NestJS` etc.? Rest of the hands would be raised for this question. Naturally one would assume
+these guys would probably know javascript or any other language their framework is in, pretty well. For sake of simplicity, I will leave other languages behind and
+only talk about javascript in this blog.
+
+# Here's a problem
+
+Write me an async queue. Its a fairly simple problem, write a queue, which allows only a certain amount of tasks run concurrently. Whenever you have a task, you push
+it to the queue and the queue runs it if it has space, otherwise, it waits.
+
+Majority of the newcomers would be baffled by this question. They would be like, well, I only used an imported function to do this before, I don't know how to do it
+without my framework. Step back, and think about it, do you really know javascript? Or only thing you know is a framework? Do you know how to actually implement an http
+route in your backend, or how to structure your projects if you didn't have a framework? How does all of the things bind together?
+
+It's very much baffling that a lot of these engineers that are going into the industry don't know anything beyond what their framework has to offer. I don't think it's their fault though, the state of software
+engineering is quite fast nowadays, things keep changing everyday, and its easy feel left behind. When you see all of your peers learning some technology, you feel like
+you should learn it too. I don't blame this mentality. This blog is about advices to learn things more thoroughly, and learning your fundamentals better.
+
+You should absolutely use libraries and frameworks, I too use them all the time. But its also important to know what goes underneath, because the more complex software
+you write, the more likely you are to face a situation where you need to write things that you cannot `npm install` and get it done. Technologies keep changing everyday,
+so try not to get too stuck up about one set of framwork/toolsets. You should focus more on learning software engineering fundamentals and know your tools better. If your
+fundamentals are strong enough, you can pick up any language/framework really easily, so I think its important to take some time to learn fundamentals really well.
+
+Maybe don't reach out for an `npm install` for everything, maybe learn to write some functionalities by yourself. Sometimes they have detrimental effect to projects. [Read this if you have time](https://www.davidhaney.io/npm-left-pad-have-we-forgotten-how-to-program/).
+
+A lot of the students I know in my school don't really even know what `malloc`, `calloc`, `realloc` or `free` works, how they manage memory. For languages like javascript,
+python etc., they don't know how garbage collection (gc) works, how poor code can make things slow because of how much time it takes for the gc to clean up objects. How [closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures) are bad, or what a closure even is.
+Knowing all these are not that important in day to day jobs for a lot of people, but knowing these things help a lot whenever you work on sufficiently large scale systems, where a millisecond latency can cause
+big headaches. Sometimes you might even need to write your own libraries, and making a well implemented and usable library is a hard thing.
+
+# Solution of the async queue problem
+
+The solution is about 15 lines of code, as simple as that.
+
+```javascript
+function async_queue(concurrency = 1) {
+  let running_task = 0
+  const task_queue = []
+
+  const run_task = (task) => {
+    running_task++
+    task(() => {
+      running_task--
+      if (task_queue.length > 0) {
+        run_task(task_queue.shift())
+      }
+    })
+  }
+
+  const enqueue_task = (task) => task_queue.push(task)
+
+  return {
+    push: (task) => (running_task < concurrency ? run_task(task) : enqueue_task(task)),
+  }
+}
+```
+
+# The point
+
+The goal of software engineering is making complex things simpler for others, not making simple things complicated. You don't really need NextJS/Vercel and 5MB javascript bundle to show cat pics online, or setup a microservices architecture to
+serve an app with 30 requests per minute traffic. Learning complex but easy tech is not as useful as learning simple but hard things.
+
+Happy Coding!
